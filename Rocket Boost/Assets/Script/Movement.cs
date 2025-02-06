@@ -15,6 +15,8 @@ public class Movement : MonoBehaviour
     [SerializeField]float thrustStrength = 0;
     [SerializeField]float rotationStrength = 0;
 
+    AudioSource audioSource = null;
+
     /// <summary>
     /// When this object is enabled in the scene
     /// </summary>
@@ -30,6 +32,7 @@ public class Movement : MonoBehaviour
     private void Start()
     {
         rb = GetComponent<Rigidbody>();
+        audioSource = GetComponent<AudioSource>();
     }
 
     /// <summary>
@@ -48,7 +51,17 @@ public class Movement : MonoBehaviour
     {
         if (thrust.IsPressed())
         {
+            // If the audio isn't playing already play the audio
+            if (!audioSource.isPlaying)
+            {
+                audioSource.Play();
+            }
+ 
             rb.AddRelativeForce(Vector3.up * thrustStrength * Time.fixedDeltaTime);
+        }
+        else
+        {
+            audioSource.Stop();
         }
     }
 
@@ -68,8 +81,13 @@ public class Movement : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Applies a rotational force to the spaceship
+    /// </summary>
+    /// <param name="moveForward">boolean that tells whether the ship is rotating to the right or left</param>
     private void ApplyRotation(bool moveForward)
     {
+        rb.freezeRotation = true;
         if(moveForward)
         {
             transform.Rotate(Vector3.forward * rotationStrength * Time.fixedDeltaTime);
