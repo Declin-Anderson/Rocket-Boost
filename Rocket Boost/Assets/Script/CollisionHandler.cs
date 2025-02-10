@@ -1,5 +1,6 @@
 using System;
 using UnityEngine;
+using UnityEngine.InputSystem;
 using UnityEngine.SceneManagement;
 
 /// <summary>
@@ -10,12 +11,50 @@ public class CollisionHandler : MonoBehaviour
     // The delay in seconds until reloading or loading next scene
     [SerializeField] float transitionDelay = 2f;
 
+    [SerializeField] AudioClip crashSound;
+    [SerializeField] AudioClip successSound;
+
+    [SerializeField] ParticleSystem successParticles;
+    [SerializeField] ParticleSystem crashParticles;
+
+    AudioSource audioSource = null;
+
+    bool isControllable = true;
+    bool isCollidable = true;
+
+    private void Start()
+    {
+        audioSource = GetComponent<AudioSource>();
+    }
+    
+    private void Update()
+    {
+        RespondToDebugKeys();
+    }
+
+    /// <summary>
+    /// When the l key is pressed it loads the next level
+    /// </summary>
+    private void RespondToDebugKeys()
+    {
+        if (Keyboard.current.lKey.isPressed == true)
+        {
+            LoadNextLevel();
+        }
+        else if (Keyboard.current.cKey.wasPressedThisFrame == true)
+        {
+            isCollidable = !isCollidable;
+        }
+    }
+
     /// <summary>
     /// Looks at the tags on the objects collidied with the ship 
     /// </summary>
     /// <param name="other"> the object the ship is colliding with</param>
     private void OnCollisionEnter(Collision other) 
     {
+        if (!isControllable || !isCollidable){return;}
+
         switch (other.gameObject.tag)
         {
             case "Friendly":
@@ -38,6 +77,10 @@ public class CollisionHandler : MonoBehaviour
     /// </summary>
     private void StartCrashSequence()
     {
+        isControllable = false;
+        audioSource.Stop();
+        audioSource.PlayOneShot(crashSound);
+        crashParticles.Play();
         GetComponent<Movement>().enabled = false;
         Invoke("ReloadLevel", transitionDelay);    
     }
@@ -47,6 +90,10 @@ public class CollisionHandler : MonoBehaviour
     /// </summary>
     private void StartNextLevelSequence()
     {
+        isControllable = false;
+        audioSource.Stop();
+        audioSource.PlayOneShot(successSound);
+        successParticles.Play();
         GetComponent<Movement>().enabled = false;
         Invoke("LoadNextLevel", transitionDelay);
     }

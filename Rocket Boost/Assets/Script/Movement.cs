@@ -11,11 +11,17 @@ public class Movement : MonoBehaviour
     [SerializeField] InputAction rotation;
     Rigidbody rb;
 
+    [SerializeField] AudioClip mainEngine;
+
     // Strength of the thrust that the spaceship applies
     [SerializeField]float thrustStrength = 0;
     [SerializeField]float rotationStrength = 0;
 
     AudioSource audioSource = null;
+
+    [SerializeField] ParticleSystem mainEngineParticles;
+    [SerializeField] ParticleSystem leftEngineParticles;
+    [SerializeField] ParticleSystem rightEngineParticles;
 
     /// <summary>
     /// When this object is enabled in the scene
@@ -51,18 +57,41 @@ public class Movement : MonoBehaviour
     {
         if (thrust.IsPressed())
         {
-            // If the audio isn't playing already play the audio
-            if (!audioSource.isPlaying)
-            {
-                audioSource.Play();
-            }
- 
-            rb.AddRelativeForce(Vector3.up * thrustStrength * Time.fixedDeltaTime);
+            StartThrusting();
         }
         else
         {
-            audioSource.Stop();
+            StopThrusting();
         }
+    }
+
+    /// <summary>
+    /// Plays the audio and particles when the player is applying thrust
+    /// </summary>
+    private void StartThrusting()
+    {
+        // If the audio isn't playing already play the audio
+        if (!audioSource.isPlaying)
+        {
+            audioSource.PlayOneShot(mainEngine);
+        }
+
+        if (!mainEngineParticles.isPlaying)
+        {
+            mainEngineParticles.Play();
+        }
+
+        rb.AddRelativeForce(Vector3.up * thrustStrength * Time.fixedDeltaTime);
+    }
+
+    
+    /// <summary>
+    /// Stops the audio and particle effects when the thrust button is not being used
+    /// </summary>
+    private void StopThrusting()
+    {
+        audioSource.Stop();
+        mainEngineParticles.Stop();
     }
 
     /// <summary>
@@ -73,12 +102,51 @@ public class Movement : MonoBehaviour
         float rotationInput = rotation.ReadValue<float>();
         if(rotationInput > 0)
         {
-            ApplyRotation(false);
+            RotateRight();
         }
         else if(rotationInput < 0)
         {
-            ApplyRotation(true);
+            RotateLeft();
         }
+        else
+        {
+            StopRotating();
+        }
+    }
+
+    /// <summary>
+    /// Applies a rotation to the right and plays the particle
+    /// </summary>
+    private void RotateRight()
+    {
+        ApplyRotation(false);
+        rightEngineParticles.Stop();
+        if (!leftEngineParticles.isPlaying)
+        {
+            leftEngineParticles.Play();
+        }
+    }
+
+    /// <summary>
+    /// Applies a rotation to the left and plays the particle
+    /// </summary>
+    private void RotateLeft()
+    {
+        leftEngineParticles.Stop();
+        ApplyRotation(true);
+        if (!rightEngineParticles.isPlaying)
+        {
+            rightEngineParticles.Play();
+        }
+    }
+
+    /// <summary>
+    /// Stops the particle effects when the player no longer rotates the ship
+    /// </summary>
+    private void StopRotating()
+    {
+        rightEngineParticles.Stop();
+        leftEngineParticles.Stop();
     }
 
     /// <summary>
